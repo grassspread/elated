@@ -87,7 +87,7 @@
 
 (defn request-words [word]
   (go
-    (let [url (str "http://words.bighugelabs.com/api/2/" words-api-key "/" word "/json")]
+    (let [url (str "http://words.bighugelabs.com/api/2/" words-api-key "/" (.toLowerCase word) "/json")]
       (-> (http/jsonp url {:callback-name "callback" :timeout 3000})
           <!
           :body))))
