@@ -31,7 +31,7 @@
                          :source-map-timestamp true }}
              {:id "min"
               :source-paths ["src"]
-              :compiler {:output-to "resources/public/js/compiled/elated.js"
+              :compiler {:output-to "resources/public/js/min/elated.js"
                          :main elated.core
                          :optimizations :advanced
                          :pretty-print false}}]}
