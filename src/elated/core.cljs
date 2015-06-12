@@ -14,12 +14,16 @@
   "This is the documentation"
   (set
     (flatten
-      (for [[origin x] thesaurus]
+      (for [[_ x] thesaurus]
         (for [[rel words] x]
           (for [word words]
-            {:word word :relation rel :origin origin}))))))
+            {:word word :relation rel}))))))
 
 (def words-api-key "28f194fbde8f31c8629b46cacf5c0223")
+
+(def relation-tone
+  {:syn "light-green"
+   :ant "amber"})
 
 (defn request-words [word]
   (go
@@ -28,7 +32,7 @@
           <!
           :body))))
 
-(defonce app-state (atom {:data {:input "" :pinned #{} :loading? false}}))
+(defonce app-state (atom {:data {:input "" :pinned [] :loading? false}}))
 
 (defn update-thesaurus-words [data word]
   (go
@@ -46,33 +50,35 @@
 (defn radio [state options]
   (icon (str "toggle-radio-button-" (if state "on" "off")) options))
 
-(defn related-word [{{:keys [word pinned?] :as related} :word :keys [on-select on-pin] :or {on-select identity
-                                                                                            on-pin    identity}} _]
+(defn related-word [{{:keys [word pinned? relation] :as related} :word :keys [on-select on-pin] :or {on-select identity
+                                                                                                     on-pin    identity}} _]
   (reify
     om/IDisplayName
     (display-name [_] "RelatedWord")
 
     om/IRender
     (render [_]
-      (dom/div #js {:className "waves-effect waves-light btn"
-                    :onClick (fn [_] (on-select related))
-                    :style   (css s/word-box)}
+      (dom/div #js {:className (str "waves-effect waves-light btn " (relation-tone relation))
+                    :onClick   (fn [_] (on-select related))
+                    :style     (css s/word-box)}
         (radio pinned? {:onClick (fn [e]
                                    (.stopPropagation e)
                                    (on-pin related)
                                    (println "pinned"))
-                        :style (css {:margin-right 5})})
+                        :style   (css {:margin-right 5})})
         word))))
 
 (defn cursor-link [cursor k]
   {:value    (k cursor)
    :onChange #(om/update! cursor k (.. % -target -value))})
 
+(defn distinctv [l] (vec (distinct l)))
+
 (defn pin-word [data word]
-  (om/transact! data :pinned #(conj % (assoc word :pinned? true))))
+  (om/transact! data :pinned #(distinctv (conj % (assoc word :pinned? true)))))
 
 (defn unpin-word [data word]
-  (om/transact! data :pinned #(disj % word)))
+  (om/transact! data :pinned #(filterv (partial not= word) %)))
 
 (defn thesaurus [{:keys [input words pinned loading?] :as data} _]
   (reify
@@ -81,30 +87,31 @@
 
     om/IRender
     (render [_]
-      (dom/div #js {:style (css s/text-center)}
-        (dom/div #js {:className "input-field"}
-          (dom/input (css (cursor-link data :input)
-                          {:type       "text"
-                           :onKeyPress (fn [e]
-                                         (if (= "Enter" (.-key e))
-                                           (update-thesaurus-words data input)))
-                           :style      (css s/main-input)})))
-        (let [on-select (partial select-thesaurus data)]
+      (let [on-select (partial select-thesaurus data)]
+        (dom/div #js {:style (css s/text-center)}
+          (dom/div #js {:className "input-field"}
+            (dom/input (css (cursor-link data :input)
+                            {:type        "text"
+                             :placeholder "Start with a word"
+                             :onKeyPress  (fn [e]
+                                            (if (= "Enter" (.-key e))
+                                              (update-thesaurus-words data input)))
+                             :style       (css s/main-input)})))
           (apply dom/div #js {:style (css s/flex-wrap)}
-                 (concat
-                   (om/build-all related-word (map
-                                                (fn [w]
-                                                  {:word      w
-                                                   :on-select on-select
-                                                   :on-pin    #(unpin-word data %)})
-                                                pinned))
-                   (om/build-all related-word (map
-                                                (fn [w]
-                                                  {:word      w
-                                                   :on-select on-select
-                                                   :on-pin    #(pin-word data %)})
-                                                words)))))
-        (if loading? (dom/div nil "Loading..."))))))
+                 (om/build-all related-word (map
+                                              (fn [w]
+                                                {:word      w
+                                                 :on-select on-select
+                                                 :on-pin    #(unpin-word data %)})
+                                              pinned)))
+          (apply dom/div #js {:style (css s/flex-wrap {:margin-top 20})}
+                 (om/build-all related-word (map
+                                              (fn [w]
+                                                {:word      w
+                                                 :on-select on-select
+                                                 :on-pin    #(pin-word data %)})
+                                              words)))
+          (if loading? (dom/div nil "Loading...")))))))
 
 (defn app-view [data _]
   (reify
