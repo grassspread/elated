@@ -45,5 +45,6 @@
     <orderEntry type="library" name="Leiningen: org.clojure/core.cache:0.6.3" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/data.priority-map:0.0.2" level="project" />
     <orderEntry type="library" name="Leiningen: cljsjs/react:0.12.2-5" level="project" />
+    <orderEntry type="library" name="materialize" level="application" />
   </component>
 </module>

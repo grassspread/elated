@@ -1,3 +1,5 @@
 /* some style */
 
-.hide { display: none; }
+body {
+  margin: 50px;
+}
