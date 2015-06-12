@@ -92,7 +92,10 @@
           <!
           :body))))
 
-(defonce app-state (atom {:data {:input "" :pinned [] :loading? false :welcome? true}}))
+(def initial-state {:data {:input "" :pinned [] :loading? false :welcome? true}})
+(defonce app-state (atom initial-state))
+
+(defn reset-state [] (reset! app-state initial-state))
 
 (defn update-thesaurus-words [data word]
   (go
@@ -108,7 +111,9 @@
 
 (defn icon [name options] (dom/i (css {:className (str "mdi-" name)} options)))
 
-(defn fa-icon [name options] (dom/i (css {:className (str "fa fa-" name)} options)))
+(defn fa-icon
+  ([name] (fa-icon name {}))
+  ([name options] (dom/i (css {:className (str "fa fa-" name)} options))))
 
 (defn radio [state options]
   (icon (str "toggle-radio-button-" (if state "on" "off")) options))
@@ -143,7 +148,13 @@
 (defn unpin-word [data word]
   (om/transact! data :pinned #(filterv (partial not= word) %)))
 
-(defn thesaurus [{:keys [input words pinned loading?] :as data} _]
+(defn reset-button [welcome?]
+  (dom/div #js {:className "fixed-action-btn"
+                :style (css {:opacity (if welcome? 0 1) :transition "opacity 300ms"})}
+    (dom/button #js {:className "btn btn-large btn-floating red"
+                     :onClick   reset-state} (fa-icon "refresh"))))
+
+(defn thesaurus [{:keys [input words pinned loading? welcome?] :as data} _]
   (reify
     om/IDisplayName
     (display-name [_] "Thesaurus")
@@ -159,7 +170,8 @@
                              :onKeyPress  (fn [e]
                                             (if (= "Enter" (.-key e))
                                               (update-thesaurus-words data input)))
-                             :style       (css s/main-input)})))
+                             :style       (css s/main-input)}))
+            (reset-button welcome?))
           (apply dom/div #js {:style (css s/flex-wrap)}
                  (om/build-all related-word (map
                                               (fn [w]
