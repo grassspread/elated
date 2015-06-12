@@ -107,6 +107,8 @@
 
 (defn icon [name options] (dom/i (css {:className (str "mdi-" name)} options)))
 
+(defn fa-icon [name options] (dom/i (css {:className (str "fa fa-" name)} options)))
+
 (defn radio [state options]
   (icon (str "toggle-radio-button-" (if state "on" "off")) options))
 
@@ -180,7 +182,10 @@
     (display-name [_] "Elated")
     om/IRender
     (render [_]
-      (om/build thesaurus (:data data)))))
+      (dom/div #js {:style (css s/text-center)}
+        (fa-icon "lightbulb-o" {:style (css {:font-size 210
+                                             :margin-bottom 30})})
+        (om/build thesaurus (:data data))))))
 
 (defn init []
   (om/root app-view app-state {:target (.getElementById js/document "app")}))
