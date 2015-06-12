@@ -14,10 +14,10 @@
   "This is the documentation"
   (set
     (flatten
-      (for [[_ x] thesaurus]
+      (for [[origin x] thesaurus]
         (for [[rel words] x]
           (for [word words]
-            {:word word :relation rel}))))))
+            {:word word :relation rel :origin origin}))))))
 
 (defn loading [options]
   (dom/div (css {:className "preloader-wrapper big active"} options)
@@ -52,17 +52,38 @@
 
 (def words-api-key "28f194fbde8f31c8629b46cacf5c0223")
 
-(def relation-tone
-  {:syn "light-green"
-   :ant "amber"})
+(def materialize-colors
+  ["red" "pink" "purple" "deep-purple" "indigo" "blue" "light-blue" "cyan" "teal"
+   "green" "light-green" "lime" "yellow" "amber" "orange" "deep-orange"
+   "brown" "grey" "blue-grey"])
+
+(def color-variations
+  ["lighten-4 black-text" "lighten-3 black-text" "lighten-2 black-text" "lighten-1 black-text"
+   ""
+   "darken-1" "darken-2" "darken-3" "darken-4"])
+
+(def color-range
+  (shuffle
+    (for [color materialize-colors
+         v     color-variations]
+     (str color " " v))))
+
+(def relations #{:syn :ant :sim :usr})
+(def origins #{:adjective :noun :verb :adverb})
 
 (def colorset
-  {#{:noun :syn} ""
-   #{:verb :syn} ""
-   #{:ant :noun} ""
-   #{:verb :ant} ""
-   #{:usr :noun} ""
-   #{:verb :usr} ""})
+  (let [base  (for [r relations
+                    o origins]
+                #{r o})
+        total (count base)]
+    (into {}
+          (map (fn [c i]
+                    (let [pct (/ i total)]
+                      [c (nth color-range (.floor js/Math (* pct (count color-range))))]))
+                  base (range)))))
+
+(defn word-color [{:keys [relation origin]}]
+  (colorset #{relation origin}))
 
 (defn request-words [word]
   (go
@@ -89,15 +110,15 @@
 (defn radio [state options]
   (icon (str "toggle-radio-button-" (if state "on" "off")) options))
 
-(defn related-word [{{:keys [word pinned? relation] :as related} :word :keys [on-select on-pin] :or {on-select identity
-                                                                                                     on-pin    identity}} _]
+(defn related-word [{{:keys [word pinned?] :as related} :word :keys [on-select on-pin] :or {on-select identity
+                                                                                            on-pin    identity}} _]
   (reify
     om/IDisplayName
     (display-name [_] "RelatedWord")
 
     om/IRender
     (render [_]
-      (dom/div #js {:className (str "waves-effect waves-light btn " (relation-tone relation))
+      (dom/div #js {:className (str "waves-effect waves-light btn " (word-color related))
                     :onClick   (fn [_] (on-select related))
                     :style     (css s/word-box)}
         (radio pinned? {:onClick (fn [e]
