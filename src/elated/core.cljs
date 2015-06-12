@@ -19,6 +19,37 @@
           (for [word words]
             {:word word :relation rel}))))))
 
+(defn loading [options]
+  (dom/div (css {:className "preloader-wrapper big active"} options)
+    (dom/div #js {:className "spinner-layer spinner-blue"}
+      (dom/div #js {:className "circle-clipper left"}
+        (dom/div #js {:className "circle"}))
+      (dom/div #js {:className "gap-patch"}
+        (dom/div #js {:className "circle"}))
+      (dom/div #js {:className "circle-clipper right"}
+        (dom/div #js {:className "circle"})))
+    (dom/div #js {:className "spinner-layer spinner-red"}
+      (dom/div #js {:className "circle-clipper left"}
+        (dom/div #js {:className "circle"}))
+      (dom/div #js {:className "gap-patch"}
+        (dom/div #js {:className "circle"}))
+      (dom/div #js {:className "circle-clipper right"}
+        (dom/div #js {:className "circle"})))
+    (dom/div #js {:className "spinner-layer spinner-yellow"}
+      (dom/div #js {:className "circle-clipper left"}
+        (dom/div #js {:className "circle"}))
+      (dom/div #js {:className "gap-patch"}
+        (dom/div #js {:className "circle"}))
+      (dom/div #js {:className "circle-clipper right"}
+        (dom/div #js {:className "circle"})))
+    (dom/div #js {:className "spinner-layer spinner-green"}
+      (dom/div #js {:className "circle-clipper left"}
+        (dom/div #js {:className "circle"}))
+      (dom/div #js {:className "gap-patch"}
+        (dom/div #js {:className "circle"}))
+      (dom/div #js {:className "circle-clipper right"}
+        (dom/div #js {:className "circle"})))))
+
 (def words-api-key "28f194fbde8f31c8629b46cacf5c0223")
 
 (def relation-tone
@@ -104,14 +135,15 @@
                                                  :on-select on-select
                                                  :on-pin    #(unpin-word data %)})
                                               pinned)))
-          (apply dom/div #js {:style (css s/flex-wrap {:margin-top 20})}
-                 (om/build-all related-word (map
-                                              (fn [w]
-                                                {:word      w
-                                                 :on-select on-select
-                                                 :on-pin    #(pin-word data %)})
-                                              words)))
-          (if loading? (dom/div nil "Loading...")))))))
+          (if loading?
+            (loading {:style {:margin-top 30}})
+            (apply dom/div #js {:style (css s/flex-wrap {:margin-top 20})}
+                   (om/build-all related-word (map
+                                                (fn [w]
+                                                  {:word      w
+                                                   :on-select on-select
+                                                   :on-pin    #(pin-word data %)})
+                                                words)))))))))
 
 (defn app-view [data _]
   (reify
