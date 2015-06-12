@@ -65,8 +65,8 @@
 (def color-range
   (shuffle
     (for [color materialize-colors
-         v     color-variations]
-     (str color " " v))))
+          v     color-variations]
+      (str color " " v))))
 
 (def relations #{:syn :ant :sim :usr})
 (def origins #{:adjective :noun :verb :adverb})
@@ -78,9 +78,9 @@
         total (count base)]
     (into {}
           (map (fn [c i]
-                    (let [pct (/ i total)]
-                      [c (nth color-range (.floor js/Math (* pct (count color-range))))]))
-                  base (range)))))
+                 (let [pct (/ i total)]
+                   [c (nth color-range (.floor js/Math (* pct (count color-range))))]))
+               base (range)))))
 
 (defn word-color [{:keys [relation origin]}]
   (colorset #{relation origin}))
@@ -92,10 +92,11 @@
           <!
           :body))))
 
-(defonce app-state (atom {:data {:input "" :pinned [] :loading? false}}))
+(defonce app-state (atom {:data {:input "" :pinned [] :loading? false :welcome? true}}))
 
 (defn update-thesaurus-words [data word]
   (go
+    (om/update! data :welcome? false)
     (om/update! data :loading? true)
     (let [result (<! (request-words word))]
       (om/update! data :words (flatten-words result))
@@ -176,15 +177,17 @@
                                                    :on-pin    #(pin-word data %)})
                                                 words)))))))))
 
-(defn app-view [data _]
+(defn app-view [{{:keys [welcome?]} :data :as data} _]
   (reify
     om/IDisplayName
     (display-name [_] "Elated")
     om/IRender
     (render [_]
       (dom/div #js {:style (css s/text-center)}
-        (fa-icon "lightbulb-o" {:style (css {:font-size 210
-                                             :margin-bottom 30})})
+        (fa-icon "lightbulb-o" {:style (css {:font-size     (if welcome? 210 0)
+                                             :margin-bottom 30
+                                             :color         "#2A8ECB"
+                                             :transition    "all 300ms"})})
         (om/build thesaurus (:data data))))))
 
 (defn init []
