@@ -56,6 +56,14 @@
   {:syn "light-green"
    :ant "amber"})
 
+(def colorset
+  {#{:noun :syn} ""
+   #{:verb :syn} ""
+   #{:ant :noun} ""
+   #{:verb :ant} ""
+   #{:usr :noun} ""
+   #{:verb :usr} ""})
+
 (defn request-words [word]
   (go
     (let [url (str "http://words.bighugelabs.com/api/2/" words-api-key "/" word "/json")]
